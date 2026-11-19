@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getDb, schema } from "@/db";
 import { isValidISODate, localNow, today } from "@/lib/dates";
 import { saveImage } from "@/lib/media";
+import { failure, type Result } from "@/lib/result";
 import { DEFAULT_PILLARS } from "@/lib/strategy";
 
 function refresh() {
@@ -112,13 +113,18 @@ export async function deleteGoal(id: number) {
 }
 
 /* Vision board */
-export async function addBoardImage(formData: FormData) {
-  const file = formData.get("file");
-  if (!(file instanceof File) || !file.size) throw new Error("No llegó ninguna imagen");
-  const img = await saveImage(new Uint8Array(await file.arrayBuffer()), file.type, today(), "upload");
-  const db = await getDb();
-  await db.insert(schema.boardItems).values({ kind: "image", mediaId: img.id, createdAt: localNow() });
-  revalidatePath("/strategy");
+export async function addBoardImage(formData: FormData): Promise<Result<object>> {
+  try {
+    const file = formData.get("file");
+    if (!(file instanceof File) || !file.size) throw new Error("No llegó ninguna imagen");
+    const img = await saveImage(new Uint8Array(await file.arrayBuffer()), file.type, today(), "upload");
+    const db = await getDb();
+    await db.insert(schema.boardItems).values({ kind: "image", mediaId: img.id, createdAt: localNow() });
+    revalidatePath("/strategy");
+    return { ok: true };
+  } catch (e) {
+    return failure(e);
+  }
 }
 
 export async function addBoardText(text: string) {

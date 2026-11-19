@@ -2,6 +2,8 @@ import Link from "next/link";
 import { JournalTabs } from "@/components/journal/JournalTabs";
 import { monthKey, MONTHS, today, weekOfYear } from "@/lib/dates";
 import { getEntryDates, getMonthSnapshots } from "@/lib/journal";
+import { getTrips } from "@/lib/experiences";
+import { addDays } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +11,13 @@ export default async function TiempoPage() {
   const now = today();
   const year = Number(now.slice(0, 4));
   const from = Math.floor(year / 10) * 10;
-  const [dates, snaps] = await Promise.all([getEntryDates(from, from + 9), getMonthSnapshots(monthKey(now), 6)]);
+  const [dates, snaps, trips] = await Promise.all([getEntryDates(from, from + 9), getMonthSnapshots(monthKey(now), 6), getTrips()]);
+  const tripWeeks = new Map<string, string>();
+  for (const t of trips) {
+    if (!t.date) continue;
+    const end = t.endDate && t.endDate >= t.date ? t.endDate : t.date;
+    for (let d = t.date, n = 0; d <= end && n < 120; d = addDays(d, 1), n++) tripWeeks.set(`${d.slice(0, 4)}-${weekOfYear(d)}`, t.title);
+  }
   const written = new Set(dates.map((d) => `${d.slice(0, 4)}-${weekOfYear(d)}`));
   const nowWeek = weekOfYear(now);
 
@@ -57,6 +65,7 @@ export default async function TiempoPage() {
           <span className="flex flex-wrap gap-4 text-xs text-umber">
             <Legend c="#5A4A3E">Vivida</Legend>
             <Legend c="#F4EADB">Con entradas</Legend>
+            <Legend c="#F97316">Viaje</Legend>
             <Legend c="#FF572E">Esta semana</Legend>
           </span>
         </div>
@@ -69,8 +78,9 @@ export default async function TiempoPage() {
                   {Array.from({ length: 52 }, (_, w) => {
                     const isNow = y === year && w === nowWeek;
                     const past = y < year || (y === year && w < nowWeek);
-                    const bg = isNow ? "#FF572E" : written.has(`${y}-${w}`) ? "#F4EADB" : past ? "#5A4A3E" : "rgba(255,255,255,0.06)";
-                    return <span key={w} className="block h-2.5 rounded-[2px]" style={{ background: bg }} />;
+                    const trip = tripWeeks.get(`${y}-${w}`);
+                    const bg = isNow ? "#FF572E" : trip ? "#F97316" : written.has(`${y}-${w}`) ? "#F4EADB" : past ? "#5A4A3E" : "rgba(255,255,255,0.06)";
+                    return <span key={w} title={trip ? `Viaje: ${trip}` : undefined} className="block h-2.5 rounded-[2px]" style={{ background: bg, boxShadow: trip && !isNow ? "0 0 6px rgba(249,115,22,0.6)" : undefined }} />;
                   })}
                 </span>
               </div>

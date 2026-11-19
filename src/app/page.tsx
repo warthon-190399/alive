@@ -6,6 +6,7 @@ import { getDb, schema } from "@/db";
 import { longDate, monthKey, MONTHS_SHORT, today, yearProgress } from "@/lib/dates";
 import { getHabitsOverview } from "@/lib/habits";
 import { getPillars, getProjects } from "@/lib/strategy";
+import { getExperiences } from "@/lib/experiences";
 import { entryText, getEntry, getOneYearAgo, getRecentDays, mediaMap } from "@/lib/journal";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,10 @@ export default async function Overview() {
     getProjects(),
     getPillars(monthKey(now)),
   ]);
+  const exps = await getExperiences();
+  const ago = `${Number(now.slice(0, 4)) - 1}${now.slice(4)}`;
+  const tripAgo = exps.find((e) => e.kind === "viaje" && !e.wishlist && e.date && e.date <= ago && (e.endDate ?? e.date) >= ago);
+  const wish = exps.find((e) => e.wishlist);
   const moving = projects.filter((p) => p.status === "activo").slice(0, 3);
   const last = recent[0] ? await getEntry(recent[0].date) : null;
   const lastImgId = last?.blocks.find((b) => b.type === "image");
@@ -142,6 +147,19 @@ export default async function Overview() {
           <Link href={`/journal?date=${yearAgo.date}`} className="glass-warm flex min-w-0 flex-[7_1_480px] flex-col justify-center gap-2 rounded-[20px] px-7 py-6 text-cream no-underline">
             <span className="font-mono text-[11px] tracking-[0.14em] text-[#FF8A55]">HACE UN AÑO, HOY</span>
             <span className="font-display text-2xl leading-tight">{yearAgo.title || entryText(yearAgo.blocks).slice(0, 160)}</span>
+          </Link>
+        )}
+        {(tripAgo || wish) && !yearAgo && (
+          <Link href={`/experiences/${(tripAgo ?? wish)!.id}`} className="relative flex min-h-44 min-w-0 flex-[7_1_480px] flex-col justify-end overflow-hidden rounded-[20px] text-ink no-underline" style={{ background: "rgba(52,34,24,0.42)" }}>
+            {(tripAgo ?? wish)!.cover && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={(tripAgo ?? wish)!.cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            )}
+            <span aria-hidden="true" className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(13,13,12,0.1) 0%, rgba(13,13,12,0.85) 100%)" }} />
+            <span className="relative flex flex-col gap-1.5 p-6">
+              <span className="font-mono text-[11px] tracking-[0.14em] text-[#FF8A55]">{tripAgo ? "HACE UN AÑO ESTABAS EN" : "EN TU LISTA DE DESEOS"}</span>
+              <span className="font-display text-[28px] leading-tight">{(tripAgo ?? wish)!.title}</span>
+            </span>
           </Link>
         )}
         <div className="glass flex min-w-0 flex-[5_1_340px] flex-col justify-between gap-4 rounded-[20px] p-6">

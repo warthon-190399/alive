@@ -6,6 +6,7 @@ import { getDb, schema } from "@/db";
 import type { Block } from "@/db/schema";
 import { isValidISODate, localNow } from "@/lib/dates";
 import { saveImage, saveImageFromUrl } from "@/lib/media";
+import { failure, type Result } from "@/lib/result";
 
 function assertDate(date: string) {
   if (!isValidISODate(date)) throw new Error("Fecha inválida");
@@ -44,18 +45,26 @@ export async function saveEntry(date: string, data: { title: string; blocks: Blo
   return { savedAt: Date.now() };
 }
 
-export async function uploadImage(formData: FormData) {
-  const date = String(formData.get("date"));
-  assertDate(date);
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) throw new Error("No llegó ninguna imagen");
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  return saveImage(bytes, file.type, date, "upload");
+export async function uploadImage(formData: FormData): Promise<Result<{ id: number; url: string }>> {
+  try {
+    const date = String(formData.get("date"));
+    assertDate(date);
+    const file = formData.get("file");
+    if (!(file instanceof File) || file.size === 0) throw new Error("No llegó ninguna imagen");
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    return { ok: true, ...(await saveImage(bytes, file.type, date, "upload")) };
+  } catch (e) {
+    return failure(e);
+  }
 }
 
-export async function importImage(url: string, date: string) {
-  assertDate(date);
-  return saveImageFromUrl(url.trim(), date);
+export async function importImage(url: string, date: string): Promise<Result<{ id: number; url: string }>> {
+  try {
+    assertDate(date);
+    return { ok: true, ...(await saveImageFromUrl(url.trim(), date)) };
+  } catch (e) {
+    return failure(e);
+  }
 }
 
 const IMG_URL = /^https?:\/\/\S+\.(jpe?g|png|webp|gif|avif)(\?\S*)?$/i;
@@ -70,7 +79,7 @@ export async function addFragment(date: string, kind: "nota" | "gratitud" | "rec
       const img = await saveImageFromUrl(t, date);
       await db.insert(schema.fragments).values({ date, kind: "web", text: "", mediaId: img.id, url: t, createdAt: localNow() });
     } catch (e) {
-      if (kind === "web") return { ok: false as const, error: (e as Error).message };
+      if (kind === "web") return { ok: false as const, error: failure(e).error };
       await db.insert(schema.fragments).values({ date, kind, text: t, createdAt: localNow() });
     }
   } else {

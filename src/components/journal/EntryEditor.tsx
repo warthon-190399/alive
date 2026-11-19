@@ -72,6 +72,10 @@ export function EntryEditor({ date, dateLabel, initial, initialMedia, moods }: P
             fd.set("date", date);
             fd.set("file", f);
             const r = await uploadImage(fd);
+            if (!r.ok) {
+              setError(r.error);
+              continue;
+            }
             setMedia((m) => ({ ...m, [r.id]: r.url }));
             setBlocks((bs) => [...bs, { id: uid(), type: "image", mediaId: r.id, caption: "" }]);
           } catch (e) {
@@ -90,6 +94,7 @@ export function EntryEditor({ date, dateLabel, initial, initialMedia, moods }: P
     startUpload(async () => {
       try {
         const r = await importImage(u, date);
+        if (!r.ok) return setError(r.error);
         setMedia((m) => ({ ...m, [r.id]: r.url }));
         add({ id: uid(), type: "image", mediaId: r.id, caption: "" });
         setUrl("");

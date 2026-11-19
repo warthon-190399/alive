@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, primaryKey, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 const createdAt = () =>
   text("created_at").notNull().default(sql`(datetime('now'))`);
@@ -174,3 +174,93 @@ export const boardItems = sqliteTable("board_items", {
   text: text("text").notNull().default(""),
   createdAt: createdAt(),
 });
+
+/* ───────────── Fase 3: Knowledge + Experiences ───────────── */
+
+export const INTEREST_STAGES = ["curiosidad", "explorando", "profundizando"] as const;
+
+/** Territorios de interés. */
+export const interests = sqliteTable("interests", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  question: text("question").notNull().default(""),
+  stage: text("stage", { enum: INTEREST_STAGES }).notNull().default("curiosidad"),
+  tags: text("tags", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+  sort: integer("sort").notNull().default(0),
+  archived: integer("archived", { mode: "boolean" }).notNull().default(false),
+  createdAt: createdAt(),
+  stageChangedAt: text("stage_changed_at"),
+  coverMediaId: integer("cover_media_id").references(() => media.id, { onDelete: "set null" }),
+});
+
+export const questions = sqliteTable("questions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  interestId: integer("interest_id").references(() => interests.id, { onDelete: "set null" }),
+  text: text("text").notNull(),
+  status: text("status", { enum: ["abierta", "cerrada"] }).notNull().default("abierta"),
+  conclusion: text("conclusion").notNull().default(""),
+  createdAt: createdAt(),
+  closedAt: text("closed_at"),
+});
+
+export const QUEUE_KINDS = ["libro", "curso", "paper", "video", "podcast", "articulo"] as const;
+export const QUEUE_STATUSES = ["cola", "explorando", "terminado", "abandonado"] as const;
+
+/** Cola de exploración: lo que quieres leer, ver o estudiar. */
+export const queueItems = sqliteTable("queue_items", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  author: text("author").notNull().default(""),
+  kind: text("kind", { enum: QUEUE_KINDS }).notNull().default("libro"),
+  url: text("url"),
+  coverMediaId: integer("cover_media_id").references(() => media.id, { onDelete: "set null" }),
+  interestId: integer("interest_id").references(() => interests.id, { onDelete: "set null" }),
+  status: text("status", { enum: QUEUE_STATUSES }).notNull().default("cola"),
+  experienceId: integer("experience_id"),
+  createdAt: createdAt(),
+  finishedAt: text("finished_at"),
+});
+
+/** Chispas: ideas y enlaces sueltos. */
+export const sparks = sqliteTable("sparks", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  kind: text("kind", { enum: ["idea", "enlace", "video"] }).notNull().default("idea"),
+  text: text("text").notNull(),
+  url: text("url"),
+  interestId: integer("interest_id").references(() => interests.id, { onDelete: "set null" }),
+  createdAt: createdAt(),
+});
+
+export const EXPERIENCE_KINDS = ["viaje", "lugar", "pelicula", "libro", "concierto", "momento"] as const;
+
+export const experiences = sqliteTable("experiences", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  kind: text("kind", { enum: EXPERIENCE_KINDS }).notNull(),
+  title: text("title").notNull(),
+  date: text("date"), // inicio (o fecha) — null en la lista de deseos
+  endDate: text("end_date"), // solo viajes
+  rating: integer("rating"), // 1–5
+  note: text("note").notNull().default(""),
+  withWhom: text("with_whom").notNull().default(""),
+  place: text("place").notNull().default(""),
+  lat: real("lat"),
+  lng: real("lng"),
+  coverMediaId: integer("cover_media_id").references(() => media.id, { onDelete: "set null" }),
+  wishlist: integer("wishlist", { mode: "boolean" }).notNull().default(false),
+  createdAt: createdAt(),
+});
+
+/** Galería de una experiencia (sobre todo viajes). */
+export const experienceMedia = sqliteTable(
+  "experience_media",
+  {
+    experienceId: integer("experience_id")
+      .notNull()
+      .references(() => experiences.id, { onDelete: "cascade" }),
+    mediaId: integer("media_id")
+      .notNull()
+      .references(() => media.id, { onDelete: "cascade" }),
+    sort: integer("sort").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.experienceId, t.mediaId] })],
+);

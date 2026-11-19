@@ -7,6 +7,7 @@ import { getDb, schema } from "@/db";
 import { TASK_STATUSES } from "@/db/schema";
 import { isValidISODate, localNow, today } from "@/lib/dates";
 import { saveImage } from "@/lib/media";
+import { failure, type Result } from "@/lib/result";
 
 type TaskStatus = (typeof TASK_STATUSES)[number];
 const str = (v: unknown, n: number) => String(v ?? "").trim().slice(0, n);
@@ -72,15 +73,19 @@ export async function deleteProject(id: number) {
   redirect("/projects");
 }
 
-export async function setProjectCover(formData: FormData) {
-  const id = Number(formData.get("projectId"));
-  const file = formData.get("file");
-  if (!id || !(file instanceof File) || !file.size) throw new Error("No llegó ninguna imagen");
-  const img = await saveImage(new Uint8Array(await file.arrayBuffer()), file.type, today(), "upload");
-  const db = await getDb();
-  await db.update(schema.projects).set({ coverMediaId: img.id }).where(eq(schema.projects.id, id));
-  refresh(id);
-  return img.url;
+export async function setProjectCover(formData: FormData): Promise<Result<{ url: string }>> {
+  try {
+    const id = Number(formData.get("projectId"));
+    const file = formData.get("file");
+    if (!id || !(file instanceof File) || !file.size) throw new Error("No llegó ninguna imagen");
+    const img = await saveImage(new Uint8Array(await file.arrayBuffer()), file.type, today(), "upload");
+    const db = await getDb();
+    await db.update(schema.projects).set({ coverMediaId: img.id }).where(eq(schema.projects.id, id));
+    refresh(id);
+    return { ok: true, url: img.url };
+  } catch (e) {
+    return failure(e);
+  }
 }
 
 /* Tareas */

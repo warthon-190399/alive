@@ -63,7 +63,11 @@ export function ProjectHeader({ p, goals }: Props) {
             const fd = new FormData();
             fd.set("projectId", String(p.id));
             fd.set("file", f);
-            start(async () => setCover(await setProjectCover(fd)));
+            start(async () => {
+              const r = await setProjectCover(fd);
+              if (r.ok) setCover(r.url);
+              else alert(r.error);
+            });
           }}
         />
       </div>

@@ -1,0 +1,1 @@
+ALTER TABLE `interests` ADD `cover_media_id` integer REFERENCES media(id);

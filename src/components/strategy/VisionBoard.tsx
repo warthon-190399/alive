@@ -33,11 +33,8 @@ export function VisionBoard({ items }: { items: Item[] }) {
               for (const f of files) {
                 const fd = new FormData();
                 fd.set("file", f);
-                try {
-                  await addBoardImage(fd);
-                } catch (x) {
-                  setErr((x as Error).message);
-                }
+                const r = await addBoardImage(fd);
+                if (!r.ok) setErr(r.error);
               }
             });
           }}

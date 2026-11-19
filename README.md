@@ -72,5 +72,7 @@ scripts/backup.mjs
 
 ## Ajustes
 
+- Mapa: copia `.env.example` como `.env.local` y pon tu clave gratuita de CARTO en `NEXT_PUBLIC_CARTO_API_KEY` (se pide en https://carto.com/basemaps/apikey). Reinicia `npm run dev` después de cambiarla. Sin clave, el mapa usa OpenStreetMap oscurecido.
+
 - Zona horaria: por defecto `America/Lima`. Para cambiarla, crea `.env.local` con `ALIVE_TZ=Europe/Madrid` (por ejemplo).
 - Abrirlo desde el celular en la misma red: `npm run dev -- -H 0.0.0.0` y entra a `http://IP-de-tu-PC:3000`. Fuera de casa, con Tailscale.

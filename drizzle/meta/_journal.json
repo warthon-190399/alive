@@ -15,6 +15,20 @@
       "when": 1795062776134,
       "tag": "0001_strategy_projects",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1795065113334,
+      "tag": "0002_knowledge_experiences",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1795067086790,
+      "tag": "0003_interest_cover",
+      "breakpoints": true
     }
   ]
 }

@@ -73,3 +73,31 @@ textarea {
   outline: 2px solid var(--color-vermilion);
   outline-offset: 2px;
 }
+
+/* Mapa (Leaflet) al estilo de alive */
+.alive-map .leaflet-popup-content-wrapper,
+.alive-map .leaflet-popup-tip {
+  background: #1f1c1a;
+  color: #fbf4ee;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: var(--font-sans);
+}
+.alive-map .leaflet-popup-content a {
+  color: #ff8a55;
+}
+.alive-map .leaflet-control-attribution {
+  background: rgba(20, 20, 20, 0.7);
+  color: #8f8981;
+}
+.alive-map .leaflet-control-attribution a {
+  color: #a8a29b;
+}
+.alive-map .leaflet-bar a {
+  background: #1f1c1a;
+  color: #fbf4ee;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+/* Respaldo sin clave de CARTO: OpenStreetMap en modo oscuro */
+.alive-osm-dark {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.4);
+}
