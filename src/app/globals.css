@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme {
+  --color-vermilion: #ff572e;
+  --color-orange: #f97316;
+  --color-deepred: #a92f27;
+  --color-obsidian: #141414;
+  --color-ink: #fbf4ee;
+  --color-muted: #a8a29b;
+  --color-faint: #8f8981;
+  --color-cream: #f4eadb;
+  --color-sand: #d9cbb8;
+  --color-umber: #bba994;
+
+  --font-sans: "Manrope Variable", system-ui, sans-serif;
+  --font-mono: "Manrope Variable", system-ui, sans-serif;
+  /* Solo para lo que escribes: entradas, citas y respuestas */
+  --font-serif: "Newsreader Variable", Georgia, serif;
+}
+
+@utility glass {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+}
+
+@utility glass-warm {
+  background: rgba(52, 34, 24, 0.42);
+  border: 1px solid rgba(255, 214, 180, 0.1);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+}
+
+/* Títulos: Manrope Bold, compacto, como el wordmark */
+@utility font-display {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+/* Etiquetas pequeñas: Manrope semibold espaciado en mayúsculas */
+@utility eyebrow {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.font-mono {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+html {
+  color-scheme: dark;
+}
+body {
+  margin: 0;
+  background: var(--color-obsidian);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+::selection {
+  background: rgba(255, 87, 46, 0.4);
+}
+textarea {
+  field-sizing: content;
+}
+:focus-visible {
+  outline: 2px solid var(--color-vermilion);
+  outline-offset: 2px;
+}
