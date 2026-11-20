@@ -23,6 +23,22 @@ npm run build
 npm start
 ```
 
+## Usarlo como app (Windows)
+
+Los scripts de `scripts/` levantan la versión compilada en <http://localhost:3333> (el modo desarrollo sigue en el 3000, así pueden convivir).
+
+| Script | Para qué |
+| --- | --- |
+| `alive.bat` | Lo levanta si no está corriendo (compila la primera vez) y lo abre |
+| `alive-actualizar.bat` | Después de cambiar el código: detiene, recompila y vuelve a abrir |
+| `alive-detener.bat` | Lo detiene |
+| `instalar-inicio.bat` | Arranca el servidor solo, sin ventanas, al iniciar sesión |
+| `quitar-inicio.bat` | Quita ese arranque automático |
+
+El servidor corre oculto y deja su registro en `data/alive-server.log`.
+
+Para tenerlo como app: abre <http://localhost:3333> en Chrome o Edge y elige **Instalar alive** (ícono en la barra de direcciones o menú ⋮ → Transmitir, guardar y compartir → Instalar). Queda con su ícono en el menú Inicio y en su propia ventana. Para un acceso directo al `.bat`, usa `scripts/alive.ico` como ícono.
+
 ## Dónde viven tus datos
 
 | Qué | Dónde |
