@@ -51,7 +51,7 @@ export default async function MesPage({ searchParams }: { searchParams: Promise<
             {data.images.slice(0, SPANS.length).map((img, i) => (
               <Link
                 key={img.id}
-                href={`/journal?date=${img.date}`}
+                href={img.href}
                 className="overflow-hidden rounded-[18px]"
                 style={{ gridColumn: `span ${SPANS[i][0]}`, gridRow: `span ${SPANS[i][1]}` }}
               >

@@ -7,7 +7,7 @@ import { longDate, monthKey, MONTHS_SHORT, today, yearProgress } from "@/lib/dat
 import { getHabitsOverview } from "@/lib/habits";
 import { getPillars, getProjects } from "@/lib/strategy";
 import { getExperiences } from "@/lib/experiences";
-import { entryText, getEntry, getOneYearAgo, getRecentDays, mediaMap } from "@/lib/journal";
+import { entryText, getEntry, getOneYearAgo, getRecentDays, mediaMap, moodColor } from "@/lib/journal";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +24,7 @@ export default async function Overview() {
   const [prios, habits, recent, yearAgo, projects, pillars] = await Promise.all([
     db.select().from(schema.priorities).where(eq(schema.priorities.date, now)),
     getHabitsOverview(now, 35),
-    getRecentDays(1),
+    getRecentDays(5),
     getOneYearAgo(now),
     getProjects(),
     getPillars(monthKey(now)),
@@ -37,6 +37,15 @@ export default async function Overview() {
   const last = recent[0] ? await getEntry(recent[0].date) : null;
   const lastImgId = last?.blocks.find((b) => b.type === "image");
   const lastImg = lastImgId && lastImgId.type === "image" ? (await mediaMap([lastImgId.mediaId]))[lastImgId.mediaId] : undefined;
+  const lastText = last ? entryText(last.blocks) : "";
+  const lastTitle = last ? last.title || lastText.slice(0, 90) || "Sin título" : "";
+  // si no hay título propio, el inicio del texto ya hace de título: el extracto sigue desde ahí
+  const lastExcerpt = last ? (last.title ? lastText : lastText.slice(90)).slice(0, 260) : "";
+  const lastMood = last?.moods?.[0];
+  const olderDays = recent.slice(1, 5);
+  const wroteToday = recent[0]?.date === now;
+  const dayMonth = (d: string) => ({ day: Number(d.slice(8, 10)), month: MONTHS_SHORT[Number(d.slice(5, 7)) - 1] });
+  const shownDate = dayMonth(last?.date ?? now);
   const yp = yearProgress(now);
   const month = Number(now.slice(5, 7)) - 1;
 
@@ -117,19 +126,69 @@ export default async function Overview() {
       )}
 
       <section aria-label="Journal y consistencia" className="mt-5 flex flex-wrap gap-5">
-        <Link href={last ? `/journal?date=${last.date}` : "/journal"} className="flex min-w-0 flex-[7_1_480px] overflow-hidden rounded-[20px] bg-cream text-[#2B2420] no-underline">
-          {lastImg && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={lastImg} alt="" className="block min-h-48 w-[38%] object-cover" />
-          )}
-          <span className="flex flex-col justify-center gap-2.5 px-7 py-6">
-            <span className="font-mono text-[11px] tracking-[0.14em] text-[#8A5A3C]">{last ? "ÚLTIMA ENTRADA" : "JOURNAL"}</span>
-            <span className="font-display text-[26px] leading-tight">
-              {last ? last.title || entryText(last.blocks).slice(0, 120) || "Sin título" : "Escribe tu primera entrada de hoy."}
+        <div className="flex min-w-0 flex-[7_1_480px] flex-wrap overflow-hidden rounded-[20px] bg-cream text-[#2B2420]">
+          {/* Columna visual: la foto de la entrada o, si no hay, la fecha en grande */}
+          <Link href={last ? `/journal?date=${last.date}` : "/journal"} aria-label={last ? `Abrir entrada del ${longDate(last.date)}` : "Abrir el journal"} className="relative flex min-h-48 min-w-0 flex-[1_1_180px] text-[#2B2420] no-underline">
+            {lastImg ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={lastImg} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            ) : (
+              <span className="flex w-full flex-col justify-between bg-[#E9DCC8] p-6">
+                <span className="font-mono text-[11px] tracking-[0.14em] text-[#8A5A3C]">{last ? "ESCRITO EL" : "HOY"}</span>
+                <span className="flex flex-col">
+                  <span className="font-display text-[88px] leading-[0.85] tracking-[-0.06em]">{shownDate.day}</span>
+                  <span className="font-display text-2xl lowercase text-[#8A5A3C]">{shownDate.month}</span>
+                </span>
+              </span>
+            )}
+          </Link>
+
+          <div className="flex min-w-0 flex-[2_1_300px] flex-col gap-3 px-7 py-6">
+            <span className="flex items-center justify-between gap-3">
+              <span className="font-mono text-[11px] tracking-[0.14em] text-[#8A5A3C]">{last ? "ÚLTIMA ENTRADA" : "JOURNAL"}</span>
+              {lastMood && (
+                <span className="flex items-center gap-1.5 text-xs text-[#5E5047]">
+                  <span aria-hidden="true" className="h-2.5 w-2.5 rounded-full ring-1 ring-[#2B2420]/25" style={{ background: moodColor(lastMood) }} />
+                  {lastMood}
+                </span>
+              )}
             </span>
-            <span className="text-[13px] text-[#5E5047]">{last ? longDate(last.date) : "Abrir el journal →"}</span>
-          </span>
-        </Link>
+
+            {last ? (
+              <Link href={`/journal?date=${last.date}`} className="flex flex-col gap-2 text-[#2B2420] no-underline">
+                <span className="font-display text-[26px] leading-tight">{lastTitle}</span>
+                {lastExcerpt && (
+                  <span className="line-clamp-3 font-serif text-[16px] leading-relaxed text-[#4A3E36]">{lastExcerpt}</span>
+                )}
+                <span className="text-[13px] text-[#5E5047]">{longDate(last.date)}</span>
+              </Link>
+            ) : (
+              <span className="font-display text-[26px] leading-tight">Escribe tu primera entrada de hoy.</span>
+            )}
+
+            {olderDays.length > 0 && (
+              <ul className="m-0 flex list-none flex-col border-t border-[#2B2420]/10 p-0 pt-2">
+                {olderDays.map((d) => {
+                  const dm = dayMonth(d.date);
+                  return (
+                    <li key={d.date}>
+                      <Link href={`/journal?date=${d.date}`} className="flex min-h-9 items-center gap-3 text-[13px] text-[#2B2420] no-underline hover:text-[#A92F27]">
+                        <span className="w-12 shrink-0 font-mono text-[11px] text-[#8A5A3C]">{dm.day} {dm.month.toLowerCase()}</span>
+                        <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full ring-1 ring-[#2B2420]/25" style={{ background: d.mood ? moodColor(d.mood) : "transparent" }} />
+                        <span className="min-w-0 flex-1 truncate">{d.title}</span>
+                        <span className="shrink-0 text-[11px] text-[#7A6A5E]">{d.meta}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+            <Link href="/journal" className="mt-auto self-start text-[13px] font-semibold text-[#A92F27]">
+              {wroteToday ? "Abrir el journal →" : "Escribir la de hoy →"}
+            </Link>
+          </div>
+        </div>
         <Link href="/habits" className="glass flex min-w-0 flex-[5_1_300px] flex-col gap-4 rounded-[20px] p-6 text-ink no-underline">
           <span className="eyebrow text-faint">Consistencia · 5 semanas</span>
           <span className="flex items-baseline gap-2.5">

@@ -77,14 +77,26 @@ export function ProjectHeader({ p, goals }: Props) {
             <span className="eyebrow text-[#FF8A55]">{p.pillarName ?? "Sin pilar"}</span>
             <label>
               <span className="sr-only">Nombre del proyecto</span>
-              <input
+              {/* textarea de una línea que crece: el título largo baja a la siguiente línea en vez de cortarse */}
+              <textarea
                 defaultValue={p.name}
-                onBlur={(e) => e.target.value !== p.name && start(() => updateProject(p.id, { name: e.target.value }))}
-                className="w-full border-0 bg-transparent p-0 font-display text-[40px] leading-none outline-none"
+                rows={1}
+                spellCheck={false}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.currentTarget.blur();
+                  }
+                }}
+                onBlur={(e) => {
+                  const v = e.target.value.replace(/\s+/g, " ").trim();
+                  if (v && v !== p.name) start(() => updateProject(p.id, { name: v }));
+                }}
+                className="block w-full resize-none overflow-hidden border-0 bg-transparent p-0 font-display text-[clamp(28px,2.6vw,40px)] leading-[1.06] [text-wrap:balance] outline-none"
               />
             </label>
           </div>
-          <span className="flex flex-col items-end">
+          <span className="flex shrink-0 flex-col items-end">
             <span className="font-display text-[56px] leading-none">{p.progress}%</span>
             <span className="text-xs text-muted">según tareas e hitos</span>
           </span>
